@@ -138,6 +138,7 @@ npm start
 ### Payment UI unit tests
 
 ```bash
-cd payment-ui
 npm test
 ```
+
+From the repository root, `npm test` forwards to `payment-ui/` so you do not need to `cd` first.
