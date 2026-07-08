@@ -1,5 +1,14 @@
 version: "3.9"
 services:
+  postgres:
+    image: postgres:16.3
+    environment:
+      POSTGRES_DB: banking
+      POSTGRES_USER: bank
+      POSTGRES_PASSWORD: bank
+    ports:
+      - "5432:5432"
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.1
     environment:
@@ -30,6 +39,7 @@ services:
       dockerfile: customer-service/Dockerfile
     depends_on:
       - kafka
+      - postgres
     ports:
       - "8081:8081"
     environment:
@@ -44,6 +54,15 @@ services:
       - customer-service
     ports:
       - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
+    ports:
+      - "8085:8085"
     environment:
       SPRING_PROFILES_ACTIVE: docker
 
@@ -76,7 +95,16 @@ services:
     depends_on:
       - customer-service
       - loan-service
+      - payment-service
     ports:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.104.0
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./docs/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "4318:4318"

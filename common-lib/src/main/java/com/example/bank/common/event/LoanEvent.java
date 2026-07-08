@@ -1,6 +1,13 @@
 package com.example.bank.common.event;
 
 /**
- * Event published by Loan Service to start asynchronous risk processing.
+ * Architecture/Tech: Kafka event contract carrying reactive workflow context and correlation ID.
  */
-public record LoanEvent(String applicationId, String customerId, Double amount, Integer termMonths, String purpose) {}
+public record LoanEvent(
+        String applicationId,
+        String customerId,
+        Double amount,
+        Integer termMonths,
+        String purpose,
+        String correlationId
+) {}

@@ -4,46 +4,33 @@ import com.example.bank.common.dto.CustomerResponse;
 import com.example.bank.common.dto.LoanApplicationRequest;
 import com.example.bank.common.dto.LoanApplicationResponse;
 import com.example.bank.common.event.LoanEvent;
+import com.example.bank.loan.client.CustomerClient;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreakerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
 /**
- * Background on the design:
- *
- * - Customer lookup is synchronous from a business perspective, but technically non-blocking via WebClient.
- * - Circuit breaker keeps repeated failures from consuming more resources.
- * - Kafka allows the API to acknowledge quickly while risk processing happens asynchronously.
+ * Architecture/Tech: WebFlux orchestration + Resilience4j-enabled reactive client + Kafka async boundary.
  */
 @Service
 @RequiredArgsConstructor
 public class LoanApplicationService {
 
-    private final WebClient customerWebClient;
-    private final ReactiveCircuitBreakerFactory<?, ?> circuitBreakerFactory;
+    private final CustomerClient customerClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public Mono<LoanApplicationResponse> apply(LoanApplicationRequest request) {
+    public Mono<LoanApplicationResponse> apply(LoanApplicationRequest request, String correlationId) {
         String applicationId = UUID.randomUUID().toString();
 
-        Mono<CustomerResponse> customerMono = customerWebClient.get()
-                .uri("/customers/{customerId}", request.customerId())
-                .retrieve()
-                .bodyToMono(CustomerResponse.class);
-
-        return circuitBreakerFactory.create("customerService")
-                .run(customerMono,
-                        ex -> Mono.error(new IllegalStateException("Customer validation temporarily unavailable", ex)))
+        return customerClient.fetchCustomer(request.customerId(), correlationId)
                 .flatMap(customer -> validate(customer, request))
                 .then(Mono.create(sink -> kafkaTemplate.send(
                                 "loan-events",
                                 applicationId,
-                                new LoanEvent(applicationId, request.customerId(), request.amount(), request.termMonths(), request.purpose()))
+                                new LoanEvent(applicationId, request.customerId(), request.amount(), request.termMonths(), request.purpose(), correlationId))
                         .whenComplete((result, ex) -> {
                             if (ex != null) sink.error(ex); else sink.success();
                         })))

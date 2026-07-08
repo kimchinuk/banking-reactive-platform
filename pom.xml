@@ -12,6 +12,7 @@
         <module>api-gateway</module>
         <module>customer-service</module>
         <module>loan-service</module>
+        <module>payment-service</module>
         <module>risk-service</module>
         <module>notification-service</module>
     </modules>
@@ -21,6 +22,8 @@
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <spring.boot.version>3.3.2</spring.boot.version>
         <spring.cloud.version>2023.0.2</spring.cloud.version>
+        <springdoc.version>2.6.0</springdoc.version>
+        <testcontainers.version>1.20.1</testcontainers.version>
     </properties>
 
     <dependencyManagement>
@@ -36,6 +39,13 @@
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
                 <version>${spring.cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

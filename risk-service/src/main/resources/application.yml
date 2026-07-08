@@ -18,6 +18,16 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.add.type.headers: false
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+logging:
+  pattern:
+    level: "%5p [corr:%X{correlationId:-na}]"
 ---
 spring:
   config:
@@ -25,3 +35,18 @@ spring:
       on-profile: docker
   kafka:
     bootstrap-servers: kafka:9092
+management:
+  otlp:
+    tracing:
+      endpoint: http://otel-collector:4318/v1/traces
+---
+spring:
+  config:
+    activate:
+      on-profile: k8s
+  kafka:
+    bootstrap-servers: kafka:9092
+management:
+  otlp:
+    tracing:
+      endpoint: http://otel-collector:4318/v1/traces

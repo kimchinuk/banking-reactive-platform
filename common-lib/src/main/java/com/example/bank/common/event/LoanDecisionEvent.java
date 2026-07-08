@@ -1,6 +1,12 @@
 package com.example.bank.common.event;
 
 /**
- * Event published by Risk Service after decisioning.
+ * Architecture/Tech: Kafka decision event with correlation context for centralized observability.
  */
-public record LoanDecisionEvent(String applicationId, String customerId, String decision, String reason) {}
+public record LoanDecisionEvent(
+        String applicationId,
+        String customerId,
+        String decision,
+        String reason,
+        String correlationId
+) {}

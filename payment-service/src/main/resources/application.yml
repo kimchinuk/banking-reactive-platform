@@ -1,0 +1,39 @@
+# Architecture/Tech: Reactive payment-service runtime config with OpenAPI, centralized logging, and OTEL tracing.
+server:
+  port: 8085
+spring:
+  application:
+    name: payment-service
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+logging:
+  pattern:
+    level: "%5p [corr:%X{correlationId:-na}]"
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+management:
+  otlp:
+    tracing:
+      endpoint: http://otel-collector:4318/v1/traces
+---
+spring:
+  config:
+    activate:
+      on-profile: k8s
+management:
+  otlp:
+    tracing:
+      endpoint: http://otel-collector:4318/v1/traces
