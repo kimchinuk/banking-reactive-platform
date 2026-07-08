@@ -1,4 +1,4 @@
-a full payment-service module and integrated it into the platform with your requested theory + coding scope.
+This module adds a full payment-service and integrates it into the platform with the requested theory + coding scope.
 1.
 New service: payment-service (Spring WebFlux) with Dockerfile, app config, correlation ID logging/tracing, OpenAPI, and gateway routing (/api/payments/), plus Docker Compose/Kubernetes/CI matrix wiring.
 2.
