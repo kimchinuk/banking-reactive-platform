@@ -71,9 +71,16 @@ spring:
       globalcors:
         corsConfigurations:
           "[/**]":
-            allowedOrigins: "http://localhost:4200"
-            allowedMethods: "*"
-            allowedHeaders: "*"
+            allowedOrigins:
+              - ${PAYMENT_UI_ORIGIN:http://localhost:4200}
+            allowedMethods:
+              - GET
+              - POST
+              - OPTIONS
+            allowedHeaders:
+              - Authorization
+              - Content-Type
+              - X-Correlation-Id
       routes:
         - id: loan-service
           uri: http://loan-service:8082
