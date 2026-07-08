@@ -371,6 +371,39 @@ spec:
     - port: 8080
       targetPort: 8080
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-ui
+  namespace: banking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-ui
+  template:
+    metadata:
+      labels:
+        app: payment-ui
+    spec:
+      containers:
+        - name: payment-ui
+          image: ghcr.io/kimchinuk/banking-reactive-platform/payment-ui:latest
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-ui
+  namespace: banking
+spec:
+  selector:
+    app: payment-ui
+  ports:
+    - port: 80
+      targetPort: 80
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

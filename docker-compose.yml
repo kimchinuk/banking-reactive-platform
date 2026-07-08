@@ -101,6 +101,15 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
 
+  payment-ui:
+    build:
+      context: .
+      dockerfile: payment-ui/Dockerfile
+    depends_on:
+      - api-gateway
+    ports:
+      - "4200:80"
+
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.104.0
     command: ["--config=/etc/otelcol-contrib/config.yaml"]

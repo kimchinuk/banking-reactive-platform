@@ -6,6 +6,9 @@
 flowchart LR
     A[Client / Banking Channel] --> G[API Gateway
 Spring Cloud Gateway + JWT]
+    A --> U[Payment UI
+Angular]
+    U --> G
     G --> P[Payment Service
 WebFlux + Strategy Pattern]
     G --> L[Loan Service
@@ -23,6 +26,7 @@ Kafka Consumer]
 ### HLD explanation
 
 - **API Gateway** centralizes routing with JWT authentication, correlation IDs, and edge security policy.
+- **Payment UI** offers transaction JSON input and result visualization for payment analytics/fees/theory use cases.
 - **Loan Service** owns synchronous input handling and business orchestration.
 - **Payment Service** provides transaction analytics, fee calculation, and interview-style debugging/theory endpoints.
 - **Customer Service** is a backing reference-data service.
