@@ -1,8 +1,9 @@
- What was added
-1.
-Angular app scaffold in payment-ui/ (standalone components, routing, reactive forms, HttpClient).
-2.
-Payment dashboard UI:
+# Payment UI
+
+## What was added
+
+1. Angular app scaffold in `payment-ui/` (standalone components, routing, reactive forms, HttpClient).
+2. Payment dashboard UI:
 ◦
 Input: JWT token + transactions JSON
 ◦
