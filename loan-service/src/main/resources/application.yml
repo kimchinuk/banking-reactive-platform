@@ -21,10 +21,41 @@ resilience4j:
         slidingWindowSize: 10
         minimumNumberOfCalls: 5
         waitDurationInOpenState: 10s
-  timelimiter:
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+  retry:
     instances:
       customerService:
-        timeoutDuration: 2s
+        maxAttempts: 3
+        waitDuration: 200ms
+        retryExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - java.util.concurrent.TimeoutException
+  bulkhead:
+    instances:
+      customerService:
+        maxConcurrentCalls: 20
+        maxWaitDuration: 100ms
+  ratelimiter:
+    instances:
+      customerService:
+        limitForPeriod: 50
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+logging:
+  pattern:
+    level: "%5p [corr:%X{correlationId:-na}]"
 ---
 spring:
   config:
@@ -35,3 +66,21 @@ spring:
 clients:
   customer:
     base-url: http://customer-service:8081
+management:
+  otlp:
+    tracing:
+      endpoint: http://otel-collector:4318/v1/traces
+---
+spring:
+  config:
+    activate:
+      on-profile: k8s
+  kafka:
+    bootstrap-servers: kafka:9092
+clients:
+  customer:
+    base-url: http://customer-service:8081
+management:
+  otlp:
+    tracing:
+      endpoint: http://otel-collector:4318/v1/traces

@@ -1,0 +1,390 @@
+# Architecture/Tech: Kubernetes manifests for Spring WebFlux microservices, Kafka, and PostgreSQL (R2DBC).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: banking
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: platform-secrets
+  namespace: banking
+type: Opaque
+stringData:
+  POSTGRES_DB: banking
+  POSTGRES_USER: bank
+  POSTGRES_PASSWORD: bank
+  JWT_SECRET: your-256-bit-secret-your-256-bit-secret
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: banking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16.3
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: POSTGRES_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: banking
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper
+  namespace: banking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      containers:
+        - name: zookeeper
+          image: confluentinc/cp-zookeeper:7.6.1
+          ports:
+            - containerPort: 2181
+          env:
+            - name: ZOOKEEPER_CLIENT_PORT
+              value: "2181"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper
+  namespace: banking
+spec:
+  selector:
+    app: zookeeper
+  ports:
+    - port: 2181
+      targetPort: 2181
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+  namespace: banking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+        - name: kafka
+          image: confluentinc/cp-kafka:7.6.1
+          ports:
+            - containerPort: 9092
+          env:
+            - name: KAFKA_BROKER_ID
+              value: "1"
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: zookeeper:2181
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: PLAINTEXT:PLAINTEXT
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: PLAINTEXT://kafka:9092
+            - name: KAFKA_LISTENERS
+              value: PLAINTEXT://0.0.0.0:9092
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: PLAINTEXT
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: banking
+spec:
+  selector:
+    app: kafka
+  ports:
+    - port: 9092
+      targetPort: 9092
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-service
+  namespace: banking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: customer-service
+  template:
+    metadata:
+      labels:
+        app: customer-service
+    spec:
+      containers:
+        - name: customer-service
+          image: ghcr.io/kimchinuk/banking-reactive-platform/customer-service:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: k8s
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-service
+  namespace: banking
+spec:
+  selector:
+    app: customer-service
+  ports:
+    - port: 8081
+      targetPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loan-service
+  namespace: banking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loan-service
+  template:
+    metadata:
+      labels:
+        app: loan-service
+    spec:
+      containers:
+        - name: loan-service
+          image: ghcr.io/kimchinuk/banking-reactive-platform/loan-service:latest
+          ports:
+            - containerPort: 8082
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: k8s
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loan-service
+  namespace: banking
+spec:
+  selector:
+    app: loan-service
+  ports:
+    - port: 8082
+      targetPort: 8082
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: risk-service
+  namespace: banking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: risk-service
+  template:
+    metadata:
+      labels:
+        app: risk-service
+    spec:
+      containers:
+        - name: risk-service
+          image: ghcr.io/kimchinuk/banking-reactive-platform/risk-service:latest
+          ports:
+            - containerPort: 8083
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: k8s
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: risk-service
+  namespace: banking
+spec:
+  selector:
+    app: risk-service
+  ports:
+    - port: 8083
+      targetPort: 8083
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: banking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: ghcr.io/kimchinuk/banking-reactive-platform/notification-service:latest
+          ports:
+            - containerPort: 8084
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: k8s
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: banking
+spec:
+  selector:
+    app: notification-service
+  ports:
+    - port: 8084
+      targetPort: 8084
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: banking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+        - name: payment-service
+          image: ghcr.io/kimchinuk/banking-reactive-platform/payment-service:latest
+          ports:
+            - containerPort: 8085
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: k8s
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: banking
+spec:
+  selector:
+    app: payment-service
+  ports:
+    - port: 8085
+      targetPort: 8085
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: banking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: ghcr.io/kimchinuk/banking-reactive-platform/api-gateway:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: k8s
+            - name: SECURITY_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: JWT_SECRET
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: banking
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: banking-gateway
+  namespace: banking
+spec:
+  rules:
+    - host: banking.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8080

@@ -5,11 +5,13 @@
 ```mermaid
 flowchart LR
     A[Client / Banking Channel] --> G[API Gateway
-Spring Cloud Gateway]
+Spring Cloud Gateway + JWT]
+    G --> P[Payment Service
+WebFlux + Strategy Pattern]
     G --> L[Loan Service
-WebFlux + WebClient]
+WebFlux + WebClient + Resilience4j]
     L -->|HTTP| C[Customer Service
-WebFlux]
+WebFlux + R2DBC PostgreSQL]
     L -->|Publish loan-events| K[(Kafka)]
     K --> R[Risk Service
 Kafka Consumer/Producer]
@@ -20,8 +22,9 @@ Kafka Consumer]
 
 ### HLD explanation
 
-- **API Gateway** centralizes routing and is the future home for authentication, rate limiting, and correlation IDs.
+- **API Gateway** centralizes routing with JWT authentication, correlation IDs, and edge security policy.
 - **Loan Service** owns synchronous input handling and business orchestration.
+- **Payment Service** provides transaction analytics, fee calculation, and interview-style debugging/theory endpoints.
 - **Customer Service** is a backing reference-data service.
 - **Kafka** decouples the request path from downstream risk and notification processing.
 - **Risk Service** can scale independently and evolve without changing the entry API.
@@ -34,6 +37,7 @@ sequenceDiagram
     autonumber
     participant Client
     participant Gateway
+    participant Payment
     participant Loan
     participant Customer
     participant Kafka
@@ -41,6 +45,8 @@ sequenceDiagram
     participant Notification
 
     Client->>Gateway: POST /api/loans/apply
+    Gateway->>Payment: POST /api/payments/...
+    Payment-->>Gateway: Aggregated analytics/fee response
     Gateway->>Loan: Forward request
     Loan->>Customer: GET /customers/{id}
     alt Customer available
@@ -72,5 +78,8 @@ Provides a reactive API gateway at the platform edge.
 ### Spring Kafka
 Implements event-driven communication between services.
 
-### Resilience4j Circuit Breaker
-Protects the Loan Service from latency amplification and repeated failures when Customer Service is unavailable.
+### Resilience4j (CircuitBreaker + Retry + Bulkhead + RateLimiter)
+Protects the Loan Service from dependency failure storms, retries transient faults safely, and controls concurrency/throughput on outbound calls.
+
+### OpenTelemetry Tracing
+All services export traces through OTLP, making gateway-to-service-to-Kafka flows observable end-to-end.

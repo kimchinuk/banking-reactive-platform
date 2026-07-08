@@ -9,7 +9,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * Kafka is the asynchronous boundary, so the API caller is not waiting during this work.
+ * Architecture/Tech: Spring Kafka consumer/producer in an event-driven workflow.
  *
  * For demo purposes we use simple threshold-based decisioning. In real banks this might call
  * credit engines, bureau data, income validation, fraud engines, or policy services.
@@ -27,7 +27,13 @@ public class RiskDecisionConsumer {
     public void onLoanEvent(LoanEvent event) {
         String decision = event.amount() <= 50000 ? "APPROVED" : "REFERRED";
         String reason = event.amount() <= 50000 ? "Auto-approved under threshold" : "Manual review required";
-        kafkaTemplate.send("loan-decisions", event.applicationId(), new LoanDecisionEvent(event.applicationId(), event.customerId(), decision, reason));
-        log.info("Decision published for applicationId={} decision={}", event.applicationId(), decision);
+        kafkaTemplate.send("loan-decisions", event.applicationId(), new LoanDecisionEvent(
+                event.applicationId(),
+                event.customerId(),
+                decision,
+                reason,
+                event.correlationId()
+        ));
+        log.info("Decision published for applicationId={} decision={} correlationId={}", event.applicationId(), decision, event.correlationId());
     }
 }

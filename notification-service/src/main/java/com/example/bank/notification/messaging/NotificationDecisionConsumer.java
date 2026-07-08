@@ -6,7 +6,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 /**
- * This service is intentionally separate so user communication is decoupled from business decisioning.
+ * Architecture/Tech: Kafka consumer for asynchronous notification side effects.
  */
 @Slf4j
 @Component
@@ -16,7 +16,7 @@ public class NotificationDecisionConsumer {
             "spring.json.value.default.type=com.example.bank.common.event.LoanDecisionEvent"
     })
     public void onDecision(LoanDecisionEvent event) {
-        log.info("Notification sent applicationId={} customerId={} decision={} reason={}",
-                event.applicationId(), event.customerId(), event.decision(), event.reason());
+        log.info("Notification sent applicationId={} customerId={} decision={} reason={} correlationId={}",
+                event.applicationId(), event.customerId(), event.decision(), event.reason(), event.correlationId());
     }
 }
