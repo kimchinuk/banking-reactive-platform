@@ -15,6 +15,7 @@ Production-style reactive microservices platform demonstrating secure gateway ac
 - **Reliability:** Resilience4j CircuitBreaker + Retry + Bulkhead + RateLimiter
 - **API docs:** OpenAPI/Swagger UI for gateway, customer-service, loan-service, and payment-service
 - **Payment domain:** dedicated payment-service covering transaction analytics, fee rules, debugging fix, and theory Q&A
+- **Frontend:** Angular payment UI for transaction input/output, theory view, and API integration
 - **Observability:** centralized correlation ID logging + OpenTelemetry tracing export
 - **Testing:** Testcontainers integration tests with real PostgreSQL
 - **Delivery:** GitHub Actions verify pipeline + Docker build matrix
@@ -37,6 +38,7 @@ See [docs/architecture.md](docs/architecture.md) for HLD/LLD diagrams.
 | customer-service | 8081 | Reactive customer profile lookup via PostgreSQL/R2DBC |
 | loan-service | 8082 | Loan intake and resilient customer validation |
 | payment-service | 8085 | Payment transaction analytics, fee calculator, debugging and theory APIs |
+| payment-ui | 4200 | Angular UI for payment-service input/output |
 | risk-service | 8083 | Async risk decisioning from Kafka events |
 | notification-service | 8084 | Async notification dispatch |
 
@@ -92,6 +94,11 @@ curl -X GET http://localhost:8080/api/payments/theory \
   -H "Authorization: Bearer <access_token>"
 ```
 
+4. Angular UI
+```bash
+http://localhost:4200
+```
+
 ## Payment transaction design notes
 
 - **Dependency Injection:** services depend on abstractions/strategies (`TransactionFeePolicy`) and are wired by Spring.
@@ -117,4 +124,20 @@ kubectl apply -f k8s/banking-reactive-platform.yaml
 
 - full Maven `clean verify` (including Testcontainers integration tests)
 - artifact upload for test reports
-- Docker build matrix for all deployable services
+- Docker build matrix for all deployable services (including payment-ui)
+- Angular unit tests for `payment-ui`
+
+## Payment UI local development
+
+```bash
+cd payment-ui
+npm install
+npm start
+```
+
+### Payment UI unit tests
+
+```bash
+cd payment-ui
+npm test
+```

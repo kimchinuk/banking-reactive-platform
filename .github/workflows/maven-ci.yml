@@ -39,7 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [api-gateway, customer-service, loan-service, payment-service, risk-service, notification-service]
+        service: [api-gateway, customer-service, loan-service, payment-service, payment-ui, risk-service, notification-service]
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -50,3 +50,19 @@ jobs:
           file: ./${{ matrix.service }}/Dockerfile
           push: false
           tags: ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }}
+
+  payment-ui-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install payment-ui dependencies
+        run: |
+          cd payment-ui
+          npm install
+      - name: Run Angular unit tests
+        run: |
+          cd payment-ui
+          npm test
