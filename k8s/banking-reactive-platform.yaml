@@ -89,6 +89,8 @@ spec:
           env:
             - name: ZOOKEEPER_CLIENT_PORT
               value: "2181"
+            - name: ZOOKEEPER_HEAP_OPTS
+              value: -Xms128m -Xmx256m
 ---
 apiVersion: v1
 kind: Service
@@ -137,6 +139,8 @@ spec:
               value: PLAINTEXT
             - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
               value: "1"
+            - name: KAFKA_HEAP_OPTS
+              value: -Xms256m -Xmx512m
 ---
 apiVersion: v1
 kind: Service
