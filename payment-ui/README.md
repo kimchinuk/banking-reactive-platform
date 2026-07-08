@@ -40,4 +40,4 @@ CI workflow updated for payment-ui Docker image + Angular unit-test job
 README and architecture docs updated
 ◦
 Gateway CORS updated for Angular local origin
-I couldn’t execute Angular tests/build in this environment because Node.js is not installed locally and Docker daemon is currently unavailable, but all requested frontend code and test cases are now in place.
+To run unit tests locally, run `npm install` and `npm test` inside `payment-ui/`.
